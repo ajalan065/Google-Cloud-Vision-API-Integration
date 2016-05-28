@@ -1,0 +1,7 @@
+field_config.type.*.third_party.google_vision:
+  type: mapping
+  label: 'Per-file type google_vision settings'
+  mapping:
+    google_vision:
+      type: boolean
+      label: 'Google vision'
