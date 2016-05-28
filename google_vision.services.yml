@@ -1,0 +1,4 @@
+services:
+  google_vision.api:
+    class: Drupal\google_vision\GoogleVisionAPI
+    arguments: ['@config.factory', '@http_client']

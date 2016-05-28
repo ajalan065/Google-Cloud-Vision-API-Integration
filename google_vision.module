@@ -6,7 +6,7 @@
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\FieldConfigInterface;
-use Drupal\google_vision\Connector;
+use Drupal\google_vision\GoogleVisionAPI;
 
 /**
  * Implements hook_entity_presave().
@@ -67,7 +67,7 @@ function google_vision_file_entity_add_labels($file, $field, $vid) {
   // Try to retrieve file URI.
   $file_uri = $file->getFileUri();
   if ($filepath = \Drupal::service('file_system')->realpath($file_uri)) {
-    $data = Connector::makeRequestForLabels($filepath);
+    $data = \Drupal::service('google_vision.api')->labelDetection($filepath);
     // If we have retrieved labels.
     if (!empty($data['responses'][0]['labelAnnotations'])) {
       $labels = [];
