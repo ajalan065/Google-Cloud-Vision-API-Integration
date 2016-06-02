@@ -6,6 +6,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Component\Serialization\Json;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\RequestOptions;
 
 class GoogleVisionAPI {
 
@@ -53,6 +54,24 @@ class GoogleVisionAPI {
   }
 
   /**
+   * Function to make request through httpClient service.
+   *
+   * @param $data.
+   *  The object to be passed during the API call.
+   *
+   * @return An array obtained in response from the API call.
+   */
+  protected function postRequest($data) {
+    $url = static::APIEndpoint . $this->apiKey;
+    $response = $this->httpClient->post($url, [
+      RequestOptions::JSON => $data,
+      RequestOptions::HEADERS => ['Content-Type' => 'application/json'],
+    ]);
+
+    return Json::decode($response->getBody());
+  }
+
+  /**
    * Function to retrieve labels for given image.
    *
    * @param string $filepath.
@@ -85,13 +104,7 @@ class GoogleVisionAPI {
       ],
     ];
 
-    $url = APIEndpoint . $this->apiKey;
-    $response = $this->httpClient->post($url, [
-      RequestOptions::JSON => $data,
-      RequestOptions::HEADERS => ['Content-Type' => 'application/json'],
-    ]);
-
-    $result = Json::decode($response->getBody());
+    $result = $this->postRequest($data);
     if (empty($result['error'])) {
       return $result;
     }
@@ -132,13 +145,7 @@ class GoogleVisionAPI {
       ],
     ];
 
-    $url = APIEndpoint . $this->apiKey;
-    $response = $this->httpClient->post($url, [
-      RequestOptions::JSON => $data,
-      RequestOptions::HEADERS => ['Content-Type' => 'application/json'],
-    ]);
-
-    $result = Json::decode($response->getBody());
+    $result = $this->postRequest($data);
     if (empty($result['error'])) {
       return $result;
     }
@@ -179,13 +186,7 @@ class GoogleVisionAPI {
       ],
     ];
 
-    $url = APIEndpoint . $this->apiKey;
-    $response = $this->httpClient->post($url, [
-      RequestOptions::JSON => $data,
-      RequestOptions::HEADERS => ['Content-Type' => 'application/json'],
-    ]);
-
-    $result = Json::decode($response->getBody());
+    $result = $this->postRequest($data);
     if (empty($result['error'])) {
       return $result;
     }
@@ -226,13 +227,7 @@ class GoogleVisionAPI {
       ],
     ];
 
-    $url = APIEndpoint . $this->apiKey;
-    $response = $this->httpClient->post($url, [
-      RequestOptions::JSON => $data,
-      RequestOptions::HEADERS => ['Content-Type' => 'application/json'],
-    ]);
-
-    $result = Json::decode($response->getBody());
+    $result = $this->postRequest($data);
     if (empty($result['error'])) {
       return $result;
     }
@@ -273,13 +268,7 @@ class GoogleVisionAPI {
       ],
     ];
 
-    $url = APIEndpoint . $this->apiKey;
-    $response = $this->httpClient->post($url, [
-      RequestOptions::JSON => $data,
-      RequestOptions::HEADERS => ['Content-Type' => 'application/json'],
-    ]);
-
-    $result = Json::decode($response->getBody());
+    $result = $this->postRequest($data);
     if (empty($result['error'])) {
       return $result;
     }
@@ -320,13 +309,7 @@ class GoogleVisionAPI {
       ],
     ];
 
-    $url = APIEndpoint . $this->apiKey;
-    $response = $this->httpClient->post($url, [
-      RequestOptions::JSON => $data,
-      RequestOptions::HEADERS => ['Content-Type' => 'application/json'],
-    ]);
-
-    $result = Json::decode($response->getBody());
+    $result = $this->postRequest($data);
     if (empty($result['error'])) {
       return $result;
     }
@@ -367,13 +350,7 @@ class GoogleVisionAPI {
       ],
     ];
 
-    $url = APIEndpoint . $this->apiKey;
-    $response = $this->httpClient->post($url, [
-      RequestOptions::JSON => $data,
-      RequestOptions::HEADERS => ['Content-Type' => 'application/json'],
-    ]);
-
-    $result = Json::decode($response->getBody());
+    $result = $this->postRequest($data);
     if (empty($result['error'])) {
       return $result;
     }
