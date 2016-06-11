@@ -28,6 +28,7 @@ function google_vision_entity_presave(Drupal\Core\Entity\EntityInterface $entity
             // Take first referenced vocabulary.
             $vid = reset($field->getSettings()['handler_settings']['target_bundles']);
             google_vision_file_entity_add_labels($entity, $field, $vid);
+            google_vision_file_entity_safe_search($entity, $field, $vid);
           }
         }
       }
@@ -115,6 +116,33 @@ function google_vision_file_entity_add_labels($file, $field, $vid) {
       }
       // Save collected values.
       $file->set($field->getName(), $values);
+    }
+  }
+}
+
+/**
+ * Try to identify and detect adult content in the image.
+ */
+function google_vision_file_entity_safe_search($file, $field, $vid) {
+  // Try to retrieve file URI.
+  $file_uri = $file->getFileUri();
+  if ($filepath = \Drupal::service('file_system')->realpath($file_uri)) {
+    $data = \Drupal::service('google_vision.api')->safeSearchDetection($filepath);
+    // If we have retrieved labels.
+    if (!empty($data['responses'][0]['safeSearchAnnotation'])) {
+      $adult = $data['responses'][0]['safeSearchAnnotation']['adult'];
+
+      $likelihood = array('LIKELY','VERY_LIKELY');
+      if(in_array($adult, $likelihood)) {
+        drupal_set_message(t('Explicit content detected. %image will not be saved.', array('%image' => $file->getFilename())), 'warning');
+
+        //Removes the image from the database.
+        $query = db_delete('file_managed');
+        $query->condition('fid', $file->id())
+          ->execute();
+      }
+
+      //$file->set('field_image_title_text', $spoof);
     }
   }
 }
