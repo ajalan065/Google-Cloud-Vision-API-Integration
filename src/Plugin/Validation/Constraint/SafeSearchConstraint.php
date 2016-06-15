@@ -14,5 +14,5 @@ use Symfony\Component\Validator\Constraint;
  */
 class SafeSearchConstraint extends Constraint {
 
-  public $message = 'The file %title contains explicit content and will not be saved.';
+  public $message = 'This image contains explicit content and will not be saved.';
 }
