@@ -10,6 +10,8 @@ use Drupal\google_vision\GoogleVisionAPI;
 use Drupal\field\FieldStorageConfigInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
 
 /**
  * Implements hook_entity_presave().
@@ -76,11 +78,16 @@ function google_vision_form_field_config_form_taxonomy_builder($entity_type, Fie
 }
 
 /**
- * Implements hook_entity_type_alter().
+ * Implements hook_entity_bundle_field_info_alter().
  */
-function google_vision_entity_type_alter(array &$entity_types) {
-  $node = $entity_types['node'];
-  $node->addConstraint('SafeSearch');
+function google_vision_entity_bundle_field_info_alter(&$fields, EntityTypeInterface $entity_type, $bundle) {
+  if ($entity_type->id() == 'node') {
+    foreach ($fields as $field) {
+      if ($field->getType() == 'image') {
+        $fields[$field->getName()]->addConstraint('SafeSearch');
+      }
+    }
+  }
 }
 
 /**
