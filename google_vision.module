@@ -65,7 +65,6 @@ function google_vision_form_field_config_edit_form_alter(&$form, \Drupal\Core\Fo
       '#title' => t('Enable Safe Search'),
       '#description' => t('Detects and avoids explicit contents.'),
       '#default_value' => !empty($settings['safe_search']) ? $settings['safe_search'] : FALSE,
-      '#default_value' => !empty($settings['google_vision']) ? $settings['google_vision'] : FALSE,
     ];
 
     $form['#entity_builders'][] = 'google_vision_form_field_config_form_image_builder';
@@ -97,7 +96,6 @@ function google_vision_entity_bundle_field_info_alter(&$fields, EntityTypeInterf
  */
 function google_vision_form_field_config_form_image_builder($entity_type, FieldConfigInterface $type, &$form, FormStateInterface $form_state) {
   $type->setThirdPartySetting('google_vision', 'safe_search', $form_state->getValue('safe_search'));
-  $type->setThirdPartySetting('google_vision', 'google_vision', $form_state->getValue('safe_search'));
 }
 
 /**

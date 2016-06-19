@@ -54,7 +54,6 @@ class SafeSearchConstraintValidator extends ConstraintValidator implements Conta
     $settings = $field_def->getThirdPartySettings('google_vision');
     // if the Safe Search detection is on.
     if (!empty($settings['safe_search'])) {
-    if (!empty($settings['google_vision'])) {
       // if the image is uploaded.
       if (!empty($data->getValue('target_id'))) {
         // Retrieve the file uri.
