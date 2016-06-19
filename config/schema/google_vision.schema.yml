@@ -5,3 +5,19 @@ field_config.type.*.third_party.google_vision:
     google_vision:
       type: boolean
       label: 'Google vision'
+
+google_vision.settings:
+  type: config_object
+  label: 'Google Vision settings'
+  mapping:
+    api_key:
+      type: string
+      label: 'Google Vision Api Key'
+
+field.field.*.*.*.third_party.google_vision:
+  type: mapping
+  label: 'Per-image field safe search settings'
+  mapping:
+    safe_search:
+      type: boolean
+      label: 'Safe Search'
