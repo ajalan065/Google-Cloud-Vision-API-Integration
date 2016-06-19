@@ -54,6 +54,7 @@ class SafeSearchConstraintValidator extends ConstraintValidator implements Conta
     $settings = $field_def->getThirdPartySettings('google_vision');
     // if the Safe Search detection is on.
     if (!empty($settings['safe_search'])) {
+    if (!empty($settings['google_vision'])) {
       // if the image is uploaded.
       if (!empty($data->getValue('target_id'))) {
         // Retrieve the file uri.
@@ -63,6 +64,7 @@ class SafeSearchConstraintValidator extends ConstraintValidator implements Conta
           if (!empty($result['responses'][0]['safeSearchAnnotation'])) {
             $adult = $result['responses'][0]['safeSearchAnnotation']['adult'];
             $likelihood = array('POSSIBLE', 'LIKELY', 'VERY_LIKELY');
+            $likelihood = array('LIKELY', 'VERY_LIKELY');
             // if the image has explicit content.
             if (in_array($adult, $likelihood)) {
               $this->context->addViolation($constraint->message);
