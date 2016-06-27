@@ -14,6 +14,8 @@ use Drupal\Core\Field\FieldItemListInterface;
 use Symfony\Component\Validator\Constraint;
 use Symfony\Component\Validator\ConstraintValidator;
 use Drupal\google_vision\GoogleVisionAPI;
+use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 
 /**
  * Tests to verify whether the Safe Search Constraint Validation works
@@ -26,7 +28,14 @@ class SafeSearchConstraintValidationTest extends WebTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['google_vision', 'node', 'image', 'field_ui', 'field'];
+  public static $modules = [
+    'google_vision',
+    'node',
+    'image',
+    'field_ui',
+    'field',
+    'google_vision_test'
+  ];
 
   /**
    * A user with permission to create content and upload images.
@@ -42,17 +51,25 @@ class SafeSearchConstraintValidationTest extends WebTestBase {
     parent::setUp();
 
     //Create custom content type.
-    $contentType = $this->drupalCreateContentType(array('type' => 'test_images', 'name' => 'Test Images'));
+    $contentType = $this->drupalCreateContentType(array(
+      'type' => 'test_images',
+      'name' => 'Test Images'
+    ));
     // Creates administrative user.
-    $this->adminUser = $this->drupalCreateUser(array('administer google vision','create test_images content', 'access content',  'access administration pages', 'administer node fields', 'administer nodes', 'administer node display')
+    $this->adminUser = $this->drupalCreateUser(array(
+        'administer google vision',
+        'create test_images content',
+        'access content',
+        'access administration pages',
+        'administer node fields',
+        'administer nodes',
+        'administer node display'
+      )
     );
     $this->drupalLogin($this->adminUser);
-
-    //Set the API Key.
-    \Drupal::configFactory()->getEditable('google_vision.settings')->set('api_key', 'AIzaSyAtuc_LOB70imSYsT0TXFUNnNlMqiDoyP8')->save();
+    //Check whether the api key is set.
     $this->drupalGet(Url::fromRoute('google_vision.settings'));
-    $this->assertResponse(200);
-    $this->assertFieldByName('api_key', 'AIzaSyAtuc_LOB70imSYsT0TXFUNnNlMqiDoyP8', 'The key has been saved');
+    $this->assertNotNull('api_key', 'The api key is set');
   }
 
   /**
@@ -138,18 +155,18 @@ class SafeSearchConstraintValidationTest extends WebTestBase {
   }
 
   /**
-   * Upload an image to the node of type test_images and create the node.
-   *
-   * @param The image file $image
-   *   A file object representing the image to upload.
+   * Create a node of type test_images and also upload an image.
    */
-  function uploadImageFile($image) {
+  public function createNodeWithImage() {
+    //Get an image.
+    $images = $this->drupalGetTestFiles('image');
+
     $edit = array(
       'title[0][value]' => $this->randomMachineName(),
-      'files[images_0]' => drupal_realpath($image->getFileUri()),
+      'files[images_0]' => drupal_realpath($images[0]->uri),
     );
 
-    $this->drupalPostForm('node/add/test_images' , $edit, t('Save and publish'));
+    $this->drupalPostForm('node/add/test_images', $edit, t('Save and publish'));
 
     // Add alt text.
     $this->drupalPostForm(NULL, ['images[0][alt]' => $this->randomMachineName()], t('Save and publish'));
@@ -176,12 +193,9 @@ class SafeSearchConstraintValidationTest extends WebTestBase {
     //Ensure that the safe search is enabled.
     $this->drupalGet("admin/structure/types/manage/test_images/fields/$field_id");
 
-    // Get an image with explicit content from web.
-    $image = file_get_contents('http://www.menshealth.com/sites/menshealth.com/files/articles/2015/12/man-snoring.jpg'); // string
-    $file = file_save_data($image, 'public://explicit.jpg', FILE_EXISTS_REPLACE);
-
     // Save the node.
-    $node_id = $this->uploadImageFile($file);
+    $node_id = $this->createNodeWithImage();
+
     //Assert the constraint message.
     $this->assertText('This image contains explicit content and will not be saved.', 'Constraint message found');
     //Assert that the node is not saved.
@@ -198,14 +212,10 @@ class SafeSearchConstraintValidationTest extends WebTestBase {
     //Ensure that the safe search is disabled.
     $this->drupalGet("admin/structure/types/manage/test_images/fields/$field_id");
 
-    // Get an image with explicit content from web.
-
-    $image = file_get_contents('http://www.menshealth.com/sites/menshealth.com/files/articles/2015/12/man-snoring.jpg'); // string
-    $file = file_save_data($image, 'public://explicit.jpg', FILE_EXISTS_REPLACE);
-
     // Save the node.
-    $node_id = $this->uploadImageFile($file);
-    //Assert the constraint message.
+    $node_id = $this->createNodeWithImage();
+
+    //Assert that no constraint message appears.
     $this->assertNoText('This image contains explicit content and will not be saved.', 'No Constraint message found');
     //Display the node.
     $this->drupalGet('node/' . $node_id);
