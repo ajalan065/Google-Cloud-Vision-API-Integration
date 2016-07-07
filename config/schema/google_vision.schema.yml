@@ -21,3 +21,6 @@ field.field.*.*.*.third_party.google_vision:
     safe_search:
       type: boolean
       label: 'Safe Search'
+    emotion_detect:
+      type: boolean
+      label: 'Emotion Detection'
