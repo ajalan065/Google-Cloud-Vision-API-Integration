@@ -49,6 +49,81 @@ class GoogleVisionAPIFake extends GoogleVisionAPI {
   }
 
   /**
+   * Function to retrieve labels for given image.
+   *
+   * @param string $filepath .
+   *
+   * @return Array|bool.
+   */
+  public function labelDetection($filepath) {
+    if (!$this->apiKey) {
+      return FALSE;
+    }
+    $response = [
+      'responses' => [
+        '0' => [
+          'labelAnnotations' => [
+            '0' => [
+              'description' => 'This will be filled with Labels.',
+            ],
+          ],
+        ],
+      ],
+    ];
+    return $response;
+  }
+
+  /**
+   * Function to detect landmarks within a given image.
+   *
+   * @param string $filepath .
+   *
+   * @return Array|bool.
+   */
+  public function landmarkDetection($filepath) {
+    if (!$this->apiKey) {
+      return FALSE;
+    }
+    $response = [
+      'responses' => [
+        '0' => [
+          'landmarkAnnotations' => [
+            '0' => [
+              'description' => 'This will be filled with Landmarks.',
+            ],
+          ],
+        ],
+      ],
+    ];
+    return $response;
+  }
+
+  /**
+   * Function to detect logos of famous brands within a given image.
+   *
+   * @param string $filepath .
+   *
+   * @return Array|bool.
+   */
+  public function logoDetection($filepath) {
+    if (!$this->apiKey) {
+      return FALSE;
+    }
+    $response = [
+      'responses' => [
+        '0' => [
+          'logoAnnotations' => [
+            '0' => [
+              'description' => 'This will be filled with Logos.',
+            ],
+          ],
+        ],
+      ],
+    ];
+    return $response;
+  }
+
+  /**
    * Function to return the response showing the image contains explicit content.
    *
    * @param string $filepath .
@@ -71,6 +146,32 @@ class GoogleVisionAPIFake extends GoogleVisionAPI {
         ),
       ),
     );
+    return $response;
+  }
+
+
+  /**
+   * Function to retrieve texts for given image.
+   *
+   * @param string $filepath .
+   *
+   * @return Array|bool.
+   */
+  public function opticalCharacterRecognition($filepath) {
+    if (!$this->apiKey) {
+      return FALSE;
+    }
+    $response = [
+      'responses' => [
+        '0' => [
+          'textAnnotations' => [
+            '0' => [
+              'description' => 'This will be filled with Optical Characters.',
+            ],
+          ],
+        ],
+      ],
+    ];
     return $response;
   }
 }

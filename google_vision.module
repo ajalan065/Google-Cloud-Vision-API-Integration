@@ -6,12 +6,9 @@
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\field\FieldConfigInterface;
-use Drupal\google_vision\GoogleVisionAPI;
 use Drupal\field\FieldStorageConfigInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
-use Drupal\Core\Field\FieldItemListInterface;
-use Drupal\Core\Field\FieldDefinitionInterface;
 
 /**
  * Implements hook_entity_presave().
@@ -33,7 +30,18 @@ function google_vision_entity_presave(Drupal\Core\Entity\EntityInterface $entity
             // Take first referenced vocabulary.
             $vid = reset($field->getSettings()['handler_settings']['target_bundles']);
             google_vision_file_entity_add_labels($entity, $field, $vid);
-            google_vision_file_entity_safe_search($entity, $field, $vid);
+          }
+        }
+        // If this field is the alt text field.
+        if ($field->getName() == 'field_image_alt_text') {
+          $value = $entity->get($field->getName())->getValue();
+          //Set the Alt Text using Vision API.
+          if (empty($value)) {
+            google_vision_set_alt_text($entity, $field);
+          }
+          else {
+            //Change the alt text if required.
+            google_vision_edit_alt_text($entity, $field, $value);
           }
         }
       }
@@ -75,6 +83,32 @@ function google_vision_form_field_config_edit_form_alter(&$form, \Drupal\Core\Fo
 
     $form['#entity_builders'][] = 'google_vision_form_field_config_form_image_builder';
   }
+  // If this field is the alt text field.
+  if ($field_entity->getName() == 'field_image_alt_text') {
+    $settings = $form_state->getFormObject()
+      ->getEntity()
+      ->getThirdPartySettings('google_vision');
+    $form['fill_alt'] = [
+      '#type' => 'details',
+      '#title' => t('Fill Alt Text by'),
+      '#open' => TRUE,
+    ];
+    $form['fill_alt']['alt_auto_filling'] = [
+      '#type' => 'radios',
+      '#title' => t('Detection Type'),
+      '#title_display' => 'invisible',
+      '#options' => [
+        'labels' => t('Label Detection'),
+        'landmark' => t('Landmark Detection'),
+        'logo' => t('Logo Detection'),
+        'ocr' => t('Optical Character Detection'),
+        'none' => t('None'),
+      ],
+      '#default_value' => !empty($settings['alt_auto_filling']) ? $settings['alt_auto_filling'] : FALSE,
+    ];
+
+    $form['#entity_builders'][] = 'google_vision_form_field_config_form_alt_text_builder';
+  }
 }
 
 /**
@@ -102,6 +136,13 @@ function google_vision_entity_bundle_field_info_alter(&$fields, EntityTypeInterf
 function google_vision_form_field_config_form_image_builder($entity_type, FieldConfigInterface $type, &$form, FormStateInterface $form_state) {
   $type->setThirdPartySetting('google_vision', 'safe_search', $form_state->getValue('safe_search'));
   $type->setThirdPartySetting('google_vision', 'emotion_detect', $form_state->getValue('emotion_detect'));
+}
+
+/**
+ * Form builder to save the settings for the alt text of image file.
+ */
+function google_vision_form_field_config_form_alt_text_builder($entity_type, FieldConfigInterface $type, &$form, FormStateInterface $form_state) {
+  $type->setThirdPartySetting('google_vision', 'alt_auto_filling', $form_state->getValue('alt_auto_filling'));
 }
 
 /**
@@ -164,28 +205,68 @@ function google_vision_file_entity_add_labels($file, $field, $vid) {
 }
 
 /**
- * Try to identify and detect adult content in the image.
+ * Set the value for the alternative text field of the image file.
  */
-function google_vision_file_entity_safe_search($file, $field, $vid) {
-  // Try to retrieve file URI.
-  $file_uri = $file->getFileUri();
-  if ($filepath = \Drupal::service('file_system')->realpath($file_uri)) {
-    $data = \Drupal::service('google_vision.api')->safeSearchDetection($filepath);
-    // If we have retrieved labels.
-    if (!empty($data['responses'][0]['safeSearchAnnotation'])) {
-      $adult = $data['responses'][0]['safeSearchAnnotation']['adult'];
+function google_vision_set_alt_text($entity, $field) {
+  // Initialize the output.
+  $output = '';
+  $settings = $field->getThirdPartySettings('google_vision');
+  if (!empty($settings['alt_auto_filling'])) {
+    $option = $settings['alt_auto_filling'];
 
-      $likelihood = array('LIKELY','VERY_LIKELY');
-      if(in_array($adult, $likelihood)) {
-        drupal_set_message(t('Explicit content detected. %image will not be saved.', array('%image' => $file->getFilename())), 'warning');
+    $file_uri = $entity->getFileUri();
+    if ($filepath = \Drupal::service('file_system')->realpath($file_uri)) {
+      $gv_service = \Drupal::service('google_vision.api');
+      switch ($option) {
+        case 'labels':
+          $data = $gv_service->labelDetection($filepath);
+          // If we have retrieved labels.
+          if (!empty($data['responses'][0]['labelAnnotations'])) {
+            $output = $data['responses'][0]['labelAnnotations'];
+          }
+          break;
+        case 'landmark':
+          $data = $gv_service->landmarkDetection($filepath);
+          // If we have retrieved landmark.
+          if (!empty($data['responses'][0]['landmarkAnnotations'])) {
+            $output = $data['responses'][0]['landmarkAnnotations'];
+          }
+          break;
 
-        //Removes the image from the database.
-        $query = db_delete('file_managed');
-        $query->condition('fid', $file->id())
-          ->execute();
+        case 'logo':
+          $data = $gv_service->logoDetection($filepath);
+          // If we have retrieved logo.
+          if (!empty($data['responses'][0]['logoAnnotations'])) {
+            $output = $data['responses'][0]['logoAnnotations'];
+          }
+          break;
+
+        case 'ocr':
+          $data = $gv_service->opticalCharacterRecognition($filepath);
+          // If we have retrieved character.
+          if (!empty($data['responses'][0]['textAnnotations'])) {
+            $output = $data['responses'][0]['textAnnotations'];
+          }
+          break;
+
+        case 'none':
+          // If none is selected, do nothing.
+          break;
       }
-
-      //$file->set('field_image_title_text', $spoof);
+    }
+    // If we have some data.
+    if (!empty($output)) {
+      // Grab first value (most relevant) and use it.
+      $value = reset($output)['description'];
+      $entity->set($field->getName(), $value);
     }
   }
+}
+
+/**
+ * Edit the current value of the Alt Text field of the image file.
+ */
+function google_vision_edit_alt_text($entity, $field, $value) {
+  //Set the new value to the Alt Text field.
+  $entity->set($field->getName(), $value);
 }
