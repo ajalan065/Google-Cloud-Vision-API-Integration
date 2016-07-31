@@ -174,4 +174,37 @@ class GoogleVisionAPIFake extends GoogleVisionAPI {
     ];
     return $response;
   }
+
+  /**
+   * Function to retrieve image attributes for given image.
+   *
+   * @param string $filepath .
+   *
+   * @return Array|bool.
+   */
+  public function imageAttributesDetection($filepath) {
+    if (!$this->apiKey) {
+      return FALSE;
+    }
+    $response = [
+      'responses' => [
+        '0' => [
+          'imagePropertiesAnnotation' => [
+            'dominantColors' => [
+              'colors' => [
+                '0' => [
+                  'color' => [
+                    'red' => 124,
+                    'blue' => 159,
+                    'green' => 20,
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ];
+    return $response;
+  }
 }

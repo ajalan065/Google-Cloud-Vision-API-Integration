@@ -5,3 +5,12 @@ google_vision.settings:
     _title: 'Google vision settings'
   requirements:
     _permission: 'administer google vision'
+
+google_vision.related_content:
+  path: '/file/{file}/similarcontent'
+  defaults:
+    _controller: '\Drupal\google_vision\Controller\SimilarContentController::fetchContent'
+    _title: 'Similar Contents'
+  requirements:
+    _permission: 'administer google vision'
+    file: \d+
