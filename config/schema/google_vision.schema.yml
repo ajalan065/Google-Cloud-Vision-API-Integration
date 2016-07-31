@@ -27,3 +27,6 @@ field.field.*.*.*.third_party.google_vision:
     alt_auto_filling:
       type: string
       label: 'Fill Alt Text'
+    google_vision:
+      type: boolean
+      label: 'Google Vision'

@@ -9,6 +9,10 @@ use Drupal\field\FieldConfigInterface;
 use Drupal\field\FieldStorageConfigInterface;
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Field\FieldItemListInterface;
+use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\taxonomy\Entity\Vocabulary;
+
 
 /**
  * Implements hook_entity_presave().
@@ -30,6 +34,23 @@ function google_vision_entity_presave(Drupal\Core\Entity\EntityInterface $entity
             // Take first referenced vocabulary.
             $vid = reset($field->getSettings()['handler_settings']['target_bundles']);
             google_vision_file_entity_add_labels($entity, $field, $vid);
+
+            //Use a new taxonomy vocabulary to group the objects by their dominant color.
+            $new_vid = "dominant_color";
+            $name = "Dominant Color";
+            $vocabularies = Vocabulary::loadMultiple();
+            // Create a vocabulary if not already present.
+            if (!isset($vocabularies[$new_vid])) {
+              $vocabulary = Vocabulary::create(array(
+                'vid' => $new_vid,
+                'machine_name' => $new_vid,
+                'name' => $name,
+              ));
+              $vocabulary->save();
+            }
+            if (!empty($field->getSettings()['handler_settings']['target_bundles']['dominant_color'])) {
+              google_vision_file_entity_dominant_color($entity, $field, $new_vid);
+            }
           }
         }
         // If this field is the alt text field.
@@ -146,6 +167,55 @@ function google_vision_form_field_config_form_alt_text_builder($entity_type, Fie
 }
 
 /**
+ * Add the terms to the corresponding taxonomy vocabulary and save the
+ * values in files.
+ */
+function google_vision_add_terms_to_vocabulary($file, $field, $vid, $labels) {
+  // Initialize the values array.
+  $values = [];
+  // Get existing values from field.
+  $values = $file->get($field->getName())->getValue();
+  $taxonomy_term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+
+  // Try to find an existing terms by these labels.
+  $query = \Drupal::database()->select('taxonomy_term_field_data', 'tfd');
+  $query->fields('tfd', ['tid', 'name']);
+  $query->condition('tfd.vid', $vid);
+  $query->condition('tfd.name', $labels, 'IN');
+  $existing_terms = $query->execute()->fetchAllKeyed();
+
+  // Handle retrieved labels.
+  foreach ($labels as $label) {
+    // Use existing term.
+    if ($existing_tid = array_search($label, $existing_terms)) {
+      $already_have = FALSE;
+          // If we already have this label in this field. Just skip.
+      foreach ($values as $value) {
+        if ($value['target_id'] == $existing_tid) {
+          $already_have = TRUE;
+        }
+      }
+          // Add existing label into field if we haven't it yet.
+      if (!$already_have) {
+        $values[] = ['target_id' => $existing_tid];
+      }
+    }
+        // Create new term and add into field.
+    else {
+      $label_term = $taxonomy_term_storage->create([
+        'name' => $label,
+        'vid' => $vid
+        ]);
+      $label_term->enforceIsNew();
+      $label_term->save();
+      $values[] = ['target_id' => $label_term->id()];
+    }
+  }
+  // Save collected values.
+  $file->set($field->getName(), $values);
+}
+
+/**
  * Try to get and add labels for the file entity.
  */
 function google_vision_file_entity_add_labels($file, $field, $vid) {
@@ -160,46 +230,42 @@ function google_vision_file_entity_add_labels($file, $field, $vid) {
         $labels[] = $item['description'];
       }
 
-      // Get existing values from field.
-      $values = $file->get($field->getName())->getValue();
-      $taxonomy_term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+      //Add the terms to vocabulary, and set the values to fields in files.
+      google_vision_add_terms_to_vocabulary($file, $field, $vid, $labels);
+    }
+  }
+}
 
-      // Try to find an existing terms by these labels.
-      $query = \Drupal::database()->select('taxonomy_term_field_data', 'tfd');
-      $query->fields('tfd', ['tid', 'name']);
-      $query->condition('tfd.vid', $vid);
-      $query->condition('tfd.name', $labels, 'IN');
-      $existing_terms = $query->execute()->fetchAllKeyed();
-
-      // Handle retrieved labels.
-      foreach ($labels as $label) {
-        // Use existing term.
-        if ($existing_tid = array_search($label, $existing_terms)) {
-          $already_have = FALSE;
-          // If we already have this label in this field. Just skip.
-          foreach ($values as $value) {
-            if ($value['target_id'] == $existing_tid) {
-              $already_have = TRUE;
-            }
-          }
-          // Add existing label into field if we haven't it yet.
-          if (!$already_have) {
-            $values[] = ['target_id' => $existing_tid];
-          }
-        }
-        // Create new term and add into field.
-        else {
-          $label_term = $taxonomy_term_storage->create([
-            'name' => $label,
-            'vid' => $vid
-          ]);
-          $label_term->enforceIsNew();
-          $label_term->save();
-          $values[] = ['target_id' => $label_term->id()];
-        }
+/**
+ * Try to get the dominant color.
+ */
+function google_vision_file_entity_dominant_color($file, $field, $vid) {
+  $file_uri = $file->getFileUri();
+  if ($filepath = \Drupal::service('file_system')->realpath($file_uri)) {
+    $data = \Drupal::service('google_vision.api')->imageAttributesDetection($filepath);
+    // If we have retrieved labels.
+    if (!empty($data['responses'][0]['imagePropertiesAnnotation'])) {
+      foreach ($data['responses'][0]['imagePropertiesAnnotation']['dominantColors']['colors'] as $item) {
+        $red = $item['color']['red'];
+        $green = $item['color']['green'];
+        $blue = $item['color']['blue'];
       }
-      // Save collected values.
-      $file->set($field->getName(), $values);
+      //Create an array of the colors along with their values.
+      $color = array(
+        'red' => $red,
+        'green' => $green,
+        'blue' => $blue
+      );
+      if($red == $green && $green == $blue) {
+        $dominant_color = ['red', 'green', 'blue'];
+      }
+      else {
+        $max_value = max($red, $green, $blue);
+      //Get the dominant color based on the maximum value.
+        $dominant_color = array_keys($color, $max_value);
+      }
+      //Add the terms to vocabulary, and set the values to fields in files.
+      google_vision_add_terms_to_vocabulary($file, $field, $vid, $dominant_color);
     }
   }
 }
