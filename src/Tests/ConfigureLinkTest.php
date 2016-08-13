@@ -20,7 +20,7 @@ class ConfigureLinkTest extends WebTestBase {
   /**
    * A user with permission to access the modules list page and check for configure link.
    *
-   * @var object
+   * @var \Drupal\user\UserInterface
    */
   protected $adminUser;
 
@@ -31,8 +31,13 @@ class ConfigureLinkTest extends WebTestBase {
     parent::setUp();
 
     // Creates administrative user.
-    $this->adminUser = $this->drupalCreateUser(array('administer site configuration', 'administer modules', 'administer permissions', 'administer google vision', 'access administration pages')
-    );
+    $this->adminUser = $this->drupalCreateUser([
+      'administer site configuration',
+      'administer modules',
+      'administer permissions',
+      'administer google vision',
+      'access administration pages',
+    ]);
     $this->drupalLogin($this->adminUser);
   }
 

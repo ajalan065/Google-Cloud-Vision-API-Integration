@@ -1,18 +1,9 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\google_vision\Form\GoogleVisionSettingsForm.
- */
-
 namespace Drupal\google_vision\Form;
 
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Path\AliasManagerInterface;
 use Drupal\Core\Form\ConfigFormBase;
-use Drupal\Core\Path\PathValidatorInterface;
-use Drupal\Core\Routing\RequestContext;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -56,8 +47,8 @@ class GoogleVisionSettingsForm extends ConfigFormBase {
       '#description' => t(
         'To create API key <ol>
             <li>Visit <a href="@url">Google Console</a> and create a project to use.</li>
-            <li>Enable the Cloud Vision API</li>
-            <li>Generate API key with type "Browser key" under the Credentials tab</li></ol>',
+            <li>Enable the Cloud Vision API.</li>
+            <li>Generate API key with type "Browser key" under the Credentials tab.</li></ol>',
         [
           '@url' => 'https://cloud.google.com/console'
         ]
