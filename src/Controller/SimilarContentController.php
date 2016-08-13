@@ -4,11 +4,8 @@ namespace Drupal\google_vision\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\file\FileInterface;
-use Drupal\file\Entity\File;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Render\BareHtmlPageRendererInterface;
 use Drupal\Core\Url;
-use Drupal\Core\Entity\EntityInterface;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Database\Connection;
 
@@ -32,26 +29,9 @@ class SimilarContentController extends ControllerBase {
   }
 
   /**
-   * Get the file title.
-   *
-   * @param integer $fid.
-   *  The file id.
-   *
-   * @return string $title.
-   *  The title of the file id passed.
-   */
-  public function getFileTitle($fid) {
-    $query = $this->connection->select('file_managed', 'fm');
-    $query->fields('fm', ['filename']);
-    $query->condition('fm.fid', $fid);
-    $title = $query->execute()->fetchField();
-    return $title;
-  }
-
-  /**
    * Returns the list of image links which share the same dominant color.
    *
-   * @param \Drupal\file\FileInterface $file.
+   * @param \Drupal\file\FileInterface $file .
    *  The file of which the similar contents are to be displayed.
    *
    * @return array $build.
@@ -81,22 +61,28 @@ class SimilarContentController extends ControllerBase {
     $build = array();
 
     if (!empty($dominant_color)) {
-    //Get all the file ids which have one or more dominant colors in common with $dominant_color.
+      //Get all the file ids which have one or more dominant colors in common with $dominant_color.
       $query = $this->connection->select('file__field_labels', 'ffl');
       $query->fields('ffl', ['entity_id', 'field_labels_target_id']);
       $query->condition('field_labels_target_id', $dominant_color, 'IN');
+      $file_ids = array_keys($query->execute()->fetchAllKeyed());
+
+      // Get the file names linked with the file ids.
+      $query = $this->connection->select('file_managed', 'fm');
+      $query->fields('fm', ['fid', 'filename']);
+      $query->condition('fm.fid', $file_ids, 'IN');
       $files = $query->execute()->fetchAllKeyed();
 
-      $build['#prefix'] = '<ul>';
-      $build['#suffix'] = '</ul>';
+      $build['list'] = [
+        '#theme' => 'item_list',
+        '#items' => [],
+      ];
 
       foreach ($files as $key => $value) {
-        $build[$key] = [
-        '#prefix' => '<li>',
-        '#type' => 'link',
-        '#title' => $this->getFileTitle($key),
-        '#url' => Url::fromRoute('entity.file.canonical', ['file' => $key]),
-        '#suffix' => '</li>',
+        $build['list']['#items'][$key] = [
+          '#type' => 'link',
+          '#title' => $value,
+          '#url' => Url::fromRoute('entity.file.canonical', ['file' => $key]),
         ];
       }
     }

@@ -4,9 +4,7 @@ namespace Drupal\google_vision_test;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\google_vision\GoogleVisionAPI;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\RequestOptions;
 
 class GoogleVisionAPIFake extends GoogleVisionAPI {
 
@@ -65,6 +63,39 @@ class GoogleVisionAPIFake extends GoogleVisionAPI {
           'labelAnnotations' => [
             '0' => [
               'description' => 'This will be filled with Labels.',
+            ],
+          ],
+        ],
+      ],
+    ];
+    return $response;
+  }
+
+  /**
+   * Function to retrieve image attributes for given image.
+   *
+   * @param string $filepath .
+   *
+   * @return Array|bool.
+   */
+  public function imageAttributesDetection($filepath) {
+    if (!$this->apiKey) {
+      return FALSE;
+    }
+    $response = [
+      'responses' => [
+        '0' => [
+          'imagePropertiesAnnotation' => [
+            'dominantColors' => [
+              'colors' => [
+                '0' => [
+                  'color' => [
+                    'red' => 124,
+                    'blue' => 159,
+                    'green' => 20,
+                  ],
+                ],
+              ],
             ],
           ],
         ],
@@ -176,30 +207,25 @@ class GoogleVisionAPIFake extends GoogleVisionAPI {
   }
 
   /**
-   * Function to retrieve image attributes for given image.
+   * Function to fetch faces from a given image.
    *
    * @param string $filepath .
    *
    * @return Array|bool.
    */
-  public function imageAttributesDetection($filepath) {
+  public function faceDetection($filepath) {
     if (!$this->apiKey) {
       return FALSE;
     }
     $response = [
       'responses' => [
         '0' => [
-          'imagePropertiesAnnotation' => [
-            'dominantColors' => [
-              'colors' => [
-                '0' => [
-                  'color' => [
-                    'red' => 124,
-                    'blue' => 159,
-                    'green' => 20,
-                  ],
-                ],
-              ],
+          'faceAnnotations' => [
+            '0' => [
+              'joyLikelihood' => 'UNLIKELY',
+              'sorrowLikelihood' => 'VERY_LIKELY',
+              'angerLikelihood' => 'LIKELY',
+              'surpriseLikelihood' => 'POSSIBLE',
             ],
           ],
         ],

@@ -1,9 +1,9 @@
 <?php
 
-namespace Drupal\google_vision\Tests;
+namespace Drupal\Tests\google_vision\Functional;
 
 use Drupal\Core\Url;
-use Drupal\simpletest\WebTestBase;
+use Drupal\Tests\BrowserTestBase;
 
 /**
  * Tests whether API key is set at the admin configuration page, and whether the
@@ -11,12 +11,12 @@ use Drupal\simpletest\WebTestBase;
  *
  * @group google_vision
  */
-class ApiKeyConfigurationTest extends WebTestBase {
+class ApiKeyConfigurationTest extends BrowserTestBase {
 
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['google_vision'];
+  public static $modules = ['file_entity', 'google_vision'];
 
   /**
    * A user with permission to create and edit books and to administer blocks.
@@ -41,6 +41,8 @@ class ApiKeyConfigurationTest extends WebTestBase {
    * Test to implement a runtime requirement checking if API key is not set.
    */
   public function testKeyConfiguration() {
+    $page = $this->getSession()->getPage();
+    $settings = Url::fromRoute('google_vision.settings')->toString();
     $this->drupalGet(Url::fromRoute('google_vision.settings'));
     $this->assertResponse(200);
     $this->assertFieldByName('api_key', '', 'The API key is not set');
@@ -48,7 +50,8 @@ class ApiKeyConfigurationTest extends WebTestBase {
     $this->assertResponse(200);
     $this->assertText('Google Vision API key is not set and it is required for some functionalities to work.', 'The content exists on the report page');
     $this->assertLink('Google Vision module settings page', 0, 'Link to the api key configuration page found');
-    $this->assertLinkByHref(Url::fromRoute('google_vision.settings')->toString());
+    // @TODO replace this later by assertLinkByHref function when added to AssertLegacyTrait
+    $this->assertNotEmpty($page->find('xpath', "//a[contains(@href, $settings)]"), 'The system status page has google vision settings page link.');
   }
 
   /**
