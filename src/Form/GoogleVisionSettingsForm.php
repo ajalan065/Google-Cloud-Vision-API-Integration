@@ -42,9 +42,9 @@ class GoogleVisionSettingsForm extends ConfigFormBase {
 
     $form['api_key'] = [
       '#type' => 'textfield',
-      '#title' => t('Google Vision API key'),
+      '#title' => $this->t('Google Vision API key'),
       '#required' => TRUE,
-      '#description' => t(
+      '#description' => $this->t(
         'To create API key <ol>
             <li>Visit <a href="@url">Google Console</a> and create a project to use.</li>
             <li>Enable the Cloud Vision API.</li>
@@ -56,6 +56,20 @@ class GoogleVisionSettingsForm extends ConfigFormBase {
       '#default_value' => $config->get('api_key')
     ];
 
+    $form['max_results_labels'] = [
+      '#type' => 'number',
+      '#title' => $this->t('Max results for Label Detection'),
+      '#description' => $this->t('Optional. The default value will be set to 5.'),
+      '#default_value' => !empty($config->get('max_results_labels')) ? $config->get('max_results_labels') : 5,
+      '#min' => 1,
+      '#step' => 1,
+    ];
+
+    $form['note'] = [
+      '#type' => 'markup',
+      '#markup' => $this->t('Note: The labels are the result of the responses returned by Vision API. It may sometimes happen that the number of results is less than this value.'),
+    ];
+
     return parent::buildForm($form, $form_state);
   }
 
@@ -65,6 +79,7 @@ class GoogleVisionSettingsForm extends ConfigFormBase {
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $this->config('google_vision.settings')
       ->set('api_key', $form_state->getValue('api_key'))
+      ->set('max_results_labels', $form_state->getValue('max_results_labels'))
       ->save();
 
     parent::submitForm($form, $form_state);

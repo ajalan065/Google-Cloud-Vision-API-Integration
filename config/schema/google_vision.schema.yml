@@ -13,6 +13,9 @@ google_vision.settings:
     api_key:
       type: string
       label: 'Google Vision Api Key'
+    max_results_labels:
+      type: integer
+      label: 'Maximum results for Label Detection'
 
 field.field.*.*.*.third_party.google_vision:
   type: mapping

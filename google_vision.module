@@ -94,13 +94,14 @@ function google_vision_entity_presave(EntityInterface $entity) {
         // If this field is the alt text field.
         if ($field->getName() == 'field_image_alt_text') {
           $value = $entity->get($field->getName())->getValue();
+          $google_vision_helper = \Drupal::service('google_vision.helper');
           // Set the Alt Text using Vision API.
           if (empty($value)) {
-            google_vision_set_alt_text($entity, $field);
+            $google_vision_helper->setAltText($entity, $field);
           }
           else {
             // Change the alt text if required.
-            google_vision_edit_alt_text($entity, $field, $value);
+            $google_vision_helper->editAltText($entity, $field, $value);
           }
         }
       }
@@ -319,7 +320,7 @@ function google_vision_file_entity_dominant_color($file, $field, $vid) {
         $green = $item['color']['green'];
         $blue = $item['color']['blue'];
       }
-      //Create an array of the colors along with their values.
+      // Create an array of the colors along with their values.
       $color = array(
         'red' => $red,
         'green' => $green,
@@ -337,72 +338,4 @@ function google_vision_file_entity_dominant_color($file, $field, $vid) {
       google_vision_add_terms_to_vocabulary($file, $field, $vid, $dominant_color);
     }
   }
-}
-
-/**
- * Set the value for the alternative text field of the image file.
- */
-function google_vision_set_alt_text($entity, $field) {
-  // Initialize the output.
-  $output = '';
-  $settings = $field->getThirdPartySettings('google_vision');
-  if (!empty($settings['alt_auto_filling'])) {
-    $option = $settings['alt_auto_filling'];
-
-    $file_uri = $entity->getFileUri();
-    if ($filepath = \Drupal::service('file_system')->realpath($file_uri)) {
-      $gv_service = \Drupal::service('google_vision.api');
-      switch ($option) {
-        case 'labels':
-          $data = $gv_service->labelDetection($filepath);
-          // If we have retrieved labels.
-          if (!empty($data['responses'][0]['labelAnnotations'])) {
-            $output = $data['responses'][0]['labelAnnotations'];
-          }
-          break;
-        case 'landmark':
-          $data = $gv_service->landmarkDetection($filepath);
-          // If we have retrieved landmark.
-          if (!empty($data['responses'][0]['landmarkAnnotations'])) {
-            $output = $data['responses'][0]['landmarkAnnotations'];
-          }
-          break;
-
-        case 'logo':
-          $data = $gv_service->logoDetection($filepath);
-          // If we have retrieved logo.
-          if (!empty($data['responses'][0]['logoAnnotations'])) {
-            $output = $data['responses'][0]['logoAnnotations'];
-          }
-          break;
-
-        case 'ocr':
-          $data = $gv_service->opticalCharacterRecognition($filepath);
-          // If we have retrieved character.
-          if (!empty($data['responses'][0]['textAnnotations'])) {
-            $output = $data['responses'][0]['textAnnotations'];
-          }
-          break;
-
-        case 'none':
-          // If none is selected, do nothing.
-          break;
-      }
-    }
-
-    // If we have some data.
-    if (!empty($output)) {
-      // Grab first value (most relevant) and use it.
-      $value = reset($output)['description'];
-      $entity->set($field->getName(), $value);
-    }
-  }
-}
-
-/**
- * Edit the current value of the Alt Text field of the image file.
- */
-function google_vision_edit_alt_text($entity, $field, $value) {
-  //Set the new value to the Alt Text field.
-  $entity->set($field->getName(), $value);
 }
