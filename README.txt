@@ -34,6 +34,7 @@ Google Vision API offers the following features:
 Taxonomy tagging using Label Detection
 --------------------------------------
 Label Detection feature of the Google Cloud Vision API has been used for taxonomy tagging purpose.
+Note: The number of results returned by the Vision API for labels is configurable. The user can set the value on /admin/config/media/google_vision. If not set, the default value is considered to be 5.
 
 Step by step instructions are given below:
 1. Create taxonomy vocabulary for your labels (tags).
