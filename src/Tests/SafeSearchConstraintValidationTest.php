@@ -34,7 +34,7 @@ class SafeSearchConstraintValidationTest extends GoogleVisionTestBase {
     parent::setUp();
 
     // Create custom content type.
-    $contentType = $this->drupalCreateContentType([
+    $this->drupalCreateContentType([
       'type' => 'test_images',
       'name' => 'Test Images'
     ]);

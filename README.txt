@@ -55,7 +55,7 @@ Step by step instructions for using the Safe Search Detection feature is given b
 
 Filling Alt Text attribute of image file
 ----------------------------------------
-Google Vision API module allows auto filling of the Alt Text attribute of the image files using Label Detection/Logo Detection/Landmark Detection/Optical Character Detection, as is choosen by the end user.
+Google Vision API module allows auto filling of the Alt Text attribute of the image files using Label Detection/Logo Detection/Landmark Detection/Optical Character Detection, as is chosen by the end user.
 
 Step by step instructions are given below:
 1. Go to the Manage fields section of the "Image" file type.

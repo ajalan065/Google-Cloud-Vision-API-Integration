@@ -8,7 +8,15 @@ use Drupal\Component\Serialization\Json;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\RequestOptions;
 
-class GoogleVisionAPI {
+/**
+ * Defines GoogleVisionApi service.
+ */
+class GoogleVisionApi implements GoogleVisionApiInterface {
+
+  /**
+   * The base url of the Google Cloud Vision API.
+   */
+  const APIEndpoint = 'https://vision.googleapis.com/v1/images:annotate?key=';
 
   /**
    * The config factory.
@@ -32,32 +40,36 @@ class GoogleVisionAPI {
   protected $apiKey;
 
   /**
-   * The base url of the Google Cloud Vision API.
+   * Stores the maxResults number for the LABEL_DETECTION feature.
+   *
+   * @var int
    */
-  const APIEndpoint = 'https://vision.googleapis.com/v1/images:annotate?key=';
+  protected $maxResultsLabelDetection;
 
   /**
-   * Construct a GoogleVisionAPI object.
+   * Construct a GoogleVisionApi object.
    *
    * @param \Drupal\Core\Config\ConfigFactoryInterface $config_factory
    *   The config factory.
    *
    * @param \GuzzleHttp\ClientInterface $http_client
    *   A Guzzle client object.
-   *
-   * @todo Throw the exception when the api key is not set on status page.
    */
   public function __construct(ConfigFactoryInterface $config_factory, ClientInterface $http_client) {
     $this->configFactory = $config_factory;
     $this->httpClient = $http_client;
     $this->apiKey = $this->configFactory->get('google_vision.settings')
       ->get('api_key');
+    $this->maxResultsLabelDetection = $this->configFactory->get('google_vision.settings')
+      ->get('max_results_labels');
   }
 
   /**
-   * Encode image to send it to the Google Vision API.
+   * Encode image to send it to the Google Vision Api.
+   *
+   * @param string $filepath
    */
-  private function encodeImage($filepath) {
+  protected function encodeImage($filepath) {
     // It looks pretty dirty. I hope that in future it will be implemented in Google SDK
     // and we will be able to avoid this approach.
     $encoded_image = base64_encode(file_get_contents($filepath));
@@ -67,10 +79,11 @@ class GoogleVisionAPI {
   /**
    * Function to make request through httpClient service.
    *
-   * @param $data .
+   * @param $data
    *  The object to be passed during the API call.
    *
-   * @return An array obtained in response from the API call.
+   * @return array
+   *  An array obtained in response from the API call.
    */
   protected function postRequest($data) {
     $url = static::APIEndpoint . $this->apiKey;
@@ -91,11 +104,7 @@ class GoogleVisionAPI {
   }
 
   /**
-   * Function to retrieve labels for given image.
-   *
-   * @param string $filepath .
-   *
-   * @return Array|bool.
+   * {@inheritdoc}
    */
   public function labelDetection($filepath) {
     if (!$this->apiKey) {
@@ -112,7 +121,7 @@ class GoogleVisionAPI {
           'features' => [
             [
               'type' => 'LABEL_DETECTION',
-              'maxResults' => 5
+              'maxResults' => $this->maxResultsLabelDetection
             ],
           ],
         ],
@@ -128,11 +137,7 @@ class GoogleVisionAPI {
   }
 
   /**
-   * Function to detect landmarks within a given image.
-   *
-   * @param string $filepath .
-   *
-   * @return Array|bool.
+   * {@inheritdoc}
    */
   public function landmarkDetection($filepath) {
     if (!$this->apiKey) {
@@ -165,11 +170,7 @@ class GoogleVisionAPI {
   }
 
   /**
-   * Function to detect logos of famous brands within a given image.
-   *
-   * @param string $filepath .
-   *
-   * @return Array|bool.
+   * {@inheritdoc}
    */
   public function logoDetection($filepath) {
     if (!$this->apiKey) {
@@ -202,11 +203,7 @@ class GoogleVisionAPI {
   }
 
   /**
-   * Function to detect explicit content within a given image.
-   *
-   * @param string $filepath .
-   *
-   * @return Array|bool.
+   * {@inheritdoc}
    */
   public function safeSearchDetection($filepath) {
     if (!$this->apiKey) {
@@ -239,11 +236,7 @@ class GoogleVisionAPI {
   }
 
   /**
-   * Function to retrieve texts for given image.
-   *
-   * @param string $filepath .
-   *
-   * @return Array|bool.
+   * {@inheritdoc}
    */
   public function opticalCharacterRecognition($filepath) {
     if (!$this->apiKey) {
@@ -276,11 +269,7 @@ class GoogleVisionAPI {
   }
 
   /**
-   * Function to fetch faces from a given image.
-   *
-   * @param string $filepath .
-   *
-   * @return Array|bool.
+   * {@inheritdoc}
    */
   public function faceDetection($filepath) {
     if (!$this->apiKey) {
@@ -313,11 +302,7 @@ class GoogleVisionAPI {
   }
 
   /**
-   * Function to retrieve image attributes for given image.
-   *
-   * @param string $filepath .
-   *
-   * @return Array|bool.
+   * {@inheritdoc}
    */
   public function imageAttributesDetection($filepath) {
     if (!$this->apiKey) {

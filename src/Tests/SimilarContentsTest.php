@@ -76,6 +76,7 @@ class SimilarContentsTest extends GoogleVisionTestBase {
     // Create multiple images to be displayed in the similar contents link.
     for ($count = 1; $count < 3; $count++) {
       $id[$count] = $this->uploadImageFile($count);
+      $this->assertNotNull($id[$count], 'The image file is created');
     }
     // Display the similar contents together.
     $this->drupalGet('file/' . $file_id . '/similarcontent');
@@ -110,6 +111,7 @@ class SimilarContentsTest extends GoogleVisionTestBase {
     // Create multiple images to be displayed in the similar contents link.
     for ($count = 1; $count < 3; $count++) {
       $id[$count] = $this->uploadImageFile($count);
+      $this->assertNotNull($id[$count], 'The image file is created');
     }
     $this->drupalGet('file/' . $file_id . '/similarcontent');
     $this->assertResponse(200);
