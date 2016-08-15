@@ -34,6 +34,7 @@ Google Vision API offers the following features:
 Taxonomy tagging using Label Detection
 --------------------------------------
 Label Detection feature of the Google Cloud Vision API has been used for taxonomy tagging purpose.
+Note: The number of results returned by the Vision API for labels is configurable. The user can set the value on /admin/config/media/google_vision. If not set, the default value is considered to be 5.
 
 Step by step instructions are given below:
 1. Create taxonomy vocabulary for your labels (tags).
@@ -44,7 +45,7 @@ Step by step instructions are given below:
 
 Safe Search Detection
 ---------------------
-Safe Search Detection feature is available and configurable for each of the image fields present for the entity types, including nodes, users, comments, etc.
+Safe Search Detection feature is available and configurable for each of the image fields present for the entity types, including nodes, users, comments, etc. This feature can be used if the site administrator/end user does not want to pollute the site with explicit/violent contents.
 
 Step by step instructions for using the Safe Search Detection feature is given below:
 1. Go to the Manage fields section of the entity type of whose image field you like to configure.
@@ -78,12 +79,12 @@ Step by step instructions are given below:
 
 Displaying the similar image files
 ----------------------------------
-Another use case for the Google Vision API module is grouping the similar image files which share the same dominant color component (Red, Green or Blue).
+Another use case for the Google Vision API module is grouping the similar image files which share the same dominant color component (Red, Green or Blue). Here, by similar contents, we do not mean that the objects would resemble each other always. Instead, the "Similar Contents" tab shows all the images which are made up of same dominant color. For example, if an object, say, belt is of red color, then the Similar Contents tab can be used to show objects like caps, shoes, etc. of same color component.
 
 Step by step instructions are given below:
 1. A new vocabulary, named "Dominant Colors" is automatically created and enabled for the field referencing to a taxonomy vocabulary, which stores the dominant color.
 2. Whenever a new file (image) is created/updated, the "Similar Contents"
-  (besides the View, Edit and Delete) displays the Similar Contents.
+  (besides the View, Edit and Delete) displays the similar contents.
 
 Author/Maintainers
 ==================
