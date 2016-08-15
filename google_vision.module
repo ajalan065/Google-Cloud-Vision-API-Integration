@@ -94,12 +94,12 @@ function google_vision_entity_presave(EntityInterface $entity) {
         // If this field is the alt text field.
         if ($field->getName() == 'field_image_alt_text') {
           $value = $entity->get($field->getName())->getValue();
-          //Set the Alt Text using Vision API.
+          // Set the Alt Text using Vision API.
           if (empty($value)) {
             google_vision_set_alt_text($entity, $field);
           }
           else {
-            //Change the alt text if required.
+            // Change the alt text if required.
             google_vision_edit_alt_text($entity, $field, $value);
           }
         }
@@ -210,6 +210,20 @@ function google_vision_form_field_config_form_alt_text_builder($entity_type, Fie
 /**
  * Add the terms to the corresponding taxonomy vocabulary and save the
  * values in files.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $file
+ *  The file entity.
+ * @param \Drupal\Core\Field\FieldDefinitionInterface $field
+ *  The field definition.
+ * @param string $vid
+ *  The vocabulary machine name.
+ * @param array $labels
+ *  An indexed array with the values to be added to the vocabulary.
+ *  For each value received in $labels, this function will use the
+ *  existing TID if the value already exists on the vocabulary, or
+ *  will create a new term if it is new. All TIDs then that
+ *  correspond to the $labels received will be stored into the
+ *  $fileentity passed in.
  */
 function google_vision_add_terms_to_vocabulary($file, $field, $vid, $labels) {
   // Get existing values from field.
@@ -257,6 +271,13 @@ function google_vision_add_terms_to_vocabulary($file, $field, $vid, $labels) {
 
 /**
  * Try to get and add labels for the file entity.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $file
+ *  The file entity.
+ * @param \Drupal\Core\Field\FieldDefinitionInterface $field
+ *  The field definition.
+ * @param string $vid
+ *  The vocabulary machine name.
  */
 function google_vision_file_entity_add_labels($file, $field, $vid) {
   // Try to retrieve file URI.
@@ -278,6 +299,13 @@ function google_vision_file_entity_add_labels($file, $field, $vid) {
 
 /**
  * Try to get the dominant color.
+ *
+ * @param \Drupal\Core\Entity\EntityInterface $file
+ *  The file entity.
+ * @param \Drupal\Core\Field\FieldDefinitionInterface $field
+ *  The field definition.
+ * @param string $vid
+ *  The vocabulary machine name.
  */
 function google_vision_file_entity_dominant_color($file, $field, $vid) {
   $file_uri = $file->getFileUri();
@@ -302,10 +330,10 @@ function google_vision_file_entity_dominant_color($file, $field, $vid) {
       }
       else {
         $max_value = max($red, $green, $blue);
-        //Get the dominant color based on the maximum value.
+        // Get the dominant color based on the maximum value.
         $dominant_color = array_keys($color, $max_value);
       }
-      //Add the terms to vocabulary, and set the values to fields in files.
+      // Add the terms to vocabulary, and set the values to fields in files.
       google_vision_add_terms_to_vocabulary($file, $field, $vid, $dominant_color);
     }
   }

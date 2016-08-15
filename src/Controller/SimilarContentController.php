@@ -8,6 +8,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Url;
 use Drupal\taxonomy\Entity\Term;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Entity\Query\QueryFactory;
 
 /**
  * Returns the related content based on dominant color of the images.
@@ -22,10 +23,35 @@ class SimilarContentController extends ControllerBase {
   protected $connection;
 
   /**
-   * Constructs a SimilarContentController object.
+   * The entity query factory service.
+   *
+   * @var \Drupal\Core\Entity\Query\QueryFactory
    */
-  public function __construct(Connection $connection) {
+  protected $entityQuery;
+
+  /**
+   * Constructs a SimilarContentController object.
+   *
+   * @param \Drupal\Core\Database\Connection $connection
+   *  The Database service object.
+   *
+   * @param \Drupal\Core\Entity\Query\QueryFactory $entity_query
+   *   The entity query factory.
+   *
+   */
+  public function __construct(Connection $connection, QueryFactory $entity_query) {
     $this->connection = $connection;
+    $this->entityQuery = $entity_query;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public static function create(ContainerInterface $container) {
+    return new static(
+      $container->get('database'),
+      $container->get('entity.query')
+    );
   }
 
   /**
@@ -42,7 +68,7 @@ class SimilarContentController extends ControllerBase {
     $file_id = $file->id();
 
     //Get an array of just term ids.
-    $query = \Drupal::entityQuery('taxonomy_term');
+    $query = $this->entityQuery->get('taxonomy_term');
     $query->condition('vid', 'dominant_color');
     $tids = $query->execute();
     $terms = Term::loadMultiple($tids);
@@ -88,17 +114,10 @@ class SimilarContentController extends ControllerBase {
     }
     else {
       $build = [
-        '#markup' => t('No items found.'),
+        '#markup' => $this->t('No items found.'),
       ];
     }
 
     return $build;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static($container->get('database'));
   }
 }
